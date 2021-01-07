@@ -6,27 +6,18 @@ import rospy
 import cv2
 import signal
 from datetime import datetime
+import ros_numpy
 
 
 from geometry_msgs.msg import Twist
 from rostk_plotting.dynamic_import import DynamicImport
 from rostk_plotting.plotting_callbacks import PlottingCallbacks
-from rostk_plotting.plotting_manager import PlottingManager, key_event
+from rostk_plotting.plotting_manager import PlottingManager, attribute_event
 import sys, select, termios, tty, os
 import rospkg
 
-rospack = rospkg.RosPack()
-package_path = rospack.get_path("rostk_plotting")
 
-def get_key(key_timeout):
-    tty.setraw(sys.stdin.fileno())
-    rlist, _, _ = select.select([sys.stdin], [], [], key_timeout)
-    if rlist:
-        key = sys.stdin.read(1)
-    else:
-        key = ''
-    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-    return key
+
 
 def signal_handler(signal, frame):
     raise KeyboardInterrupt('SIGINT received')
@@ -38,18 +29,26 @@ class ScreenShotPlotting(PlottingManager, PlottingCallbacks):
         PlottingCallbacks.__init__(self)
         PlottingManager.__init__(self, topic_list, queue_size, slop_time, self)
 
-        self.info_flag = True
+        self.screen_cap_flag = False
+        self.image_id = 0
+
+    def post_callback(self):
+        self.screen_cap_flag = False
 
     def parse_command(self, command_string):
-        pass
+        if command_string == "sc":
+            self.screen_cap_flag = True
 
-    @key_event("info_flag")
+    @attribute_event("screen_cap_flag")
     def camera_info_callback(self, data):
         print("In better camera info")
 
-
+    @attribute_event("screen_cap_flag")
     def image_callback(self, data):
         print("in better image callback")
+        input_image = ros_numpy.numpify(data)
+        cv2.imwrite(self.current_record_folder + str(self.image_id) + ".png", input_image)
+        self.image_id+=1
 
 
 
@@ -62,7 +61,6 @@ if __name__=="__main__":
     queue_size = rospy.get_param('/ros_toolkit/plotting/queue_size')
     slop_time = rospy.get_param('/ros_toolkit/plotting/slop_time')
 
-    record_path = package_path + "/records"
     manager = ScreenShotPlotting(snapshot_topic_list, int(queue_size), int(slop_time))
 
     
@@ -71,9 +69,11 @@ if __name__=="__main__":
         #we are in python2.7! 
         try:  
             input_command = str(raw_input())
+            PlottingManager.execute_commands(input_command)
         except KeyboardInterrupt:
             rospy.signal_shutdown("CTR-C recieved")
-            break
+            
+            clear_records = str(raw_input("Would you like to clear records just made: {} [y/n]".format()))
 
         
 

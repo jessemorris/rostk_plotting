@@ -1,3 +1,4 @@
 snapshot_topics:
   - {"/gmsl/A1/camera_info": "sensor_msgs.msg.CameraInfo"}
   - {"/gmsl/A1/image_color": "sensor_msgs.msg.Image"}
+  - {"/gmsl/A2/image_color": "sensor_msgs.msg.Image"}
