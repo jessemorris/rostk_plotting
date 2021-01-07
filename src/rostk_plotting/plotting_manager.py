@@ -1,4 +1,4 @@
-from threading import Thread, Condition
+from threading import Thread, Condition, RLock
 import message_filters
 import roslib
 import rospy
@@ -20,6 +20,8 @@ package_path = rospack.get_path("rostk_plotting")
 
 record_path = package_path + "/records/"
 
+# _attribute_lock = RLock()
+
 #should be the name of some variable that, when true, triggers the callback function
 def attribute_event(attribute_flag):
     def _check_signal_flag(f):
@@ -29,7 +31,8 @@ def attribute_event(attribute_flag):
                 #only triggers function if true
                 if flag:
                     return f(self, *args)
-            except AttributeError:
+            except AttributeError as e:
+                print(e)
                 rospy.logwarn("No trigger attribute {} to watch".format(attribute_flag))
         return wrapper
     return _check_signal_flag
@@ -150,6 +153,7 @@ class PlottingManager():
         assert(PlottingManager._current_record_folder == None)
         today = datetime.now()
         PlottingManager._current_record_folder = record_path + today.strftime("%m:%d:%Y-%H:%M:%S")
+        print("Current results directionary: {}".format(PlottingManager._current_record_folder))
         os.mkdir(PlottingManager._current_record_folder)
 
     @staticmethod
