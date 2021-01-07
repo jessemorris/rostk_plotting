@@ -44,12 +44,10 @@ class ScreenShotPlotting(PlottingManager, PlottingCallbacks):
 
     @attribute_event("screen_cap_flag")
     def camera_info_callback(self, data):
-        print("In better camera info")
-
+        pass
 
     @attribute_event("screen_cap_flag")
     def image_callback(self, data):
-        print("in better image callback")
         input_image = image_msg_to_np(data)
         cv2.imwrite(ScreenShotPlotting.get_current_record_folder() + str(self.image_id) + ".png", input_image)
         self.image_id+=1

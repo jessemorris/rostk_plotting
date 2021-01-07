@@ -126,7 +126,7 @@ class PlottingManager():
         
 
     def add_saving_method(self, msg_name, func):
-        #msg name should be a string and be a type that the time sync is subscribing to
+        #msg name should be a string and be a type that the time sync is subscribing to eg "Image", "CameraInfo"
         # func should be any function that takes a single param (the data). This is used 
         # to do some operation on the data such as save to a data stream or write to memory
         if msg_name in self.saving_methods:

@@ -14,8 +14,8 @@ class PlottingCallbacks():
         return self.default_callbacks
 
     def camera_info_callback(self, data):
-        print("In camera info")
+        pass
 
 
     def image_callback(self, data):
-        print("in image callback")
+        pass
