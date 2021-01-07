@@ -9,8 +9,8 @@ from datetime import datetime
 import ros_numpy
 
 
-from geometry_msgs.msg import Twist
 from rostk_plotting.dynamic_import import DynamicImport
+from rostk_plotting.transforms import *
 from rostk_plotting.plotting_callbacks import PlottingCallbacks
 from rostk_plotting.plotting_manager import PlottingManager, attribute_event
 import sys, select, termios, tty, os
@@ -35,6 +35,9 @@ class ScreenShotPlotting(PlottingManager, PlottingCallbacks):
     def post_callback(self):
         self.screen_cap_flag = False
 
+    def on_shutdown(self):
+        print("Goodbye")
+
     def parse_command(self, command_string):
         if command_string == "sc":
             self.screen_cap_flag = True
@@ -43,10 +46,11 @@ class ScreenShotPlotting(PlottingManager, PlottingCallbacks):
     def camera_info_callback(self, data):
         print("In better camera info")
 
+
     @attribute_event("screen_cap_flag")
     def image_callback(self, data):
         print("in better image callback")
-        input_image = ros_numpy.numpify(data)
+        input_image = image_msg_to_np(data)
         cv2.imwrite(self.current_record_folder + str(self.image_id) + ".png", input_image)
         self.image_id+=1
 
@@ -73,7 +77,13 @@ if __name__=="__main__":
         except KeyboardInterrupt:
             rospy.signal_shutdown("CTR-C recieved")
             
-            clear_records = str(raw_input("Would you like to clear records just made: {} [y/n]".format()))
+            clear_records = str(raw_input("Would you like to clear records just made: {} [y/n]".format(PlottingManager.get_current_record_folder())))
+            if clear_records == "y":
+                print("Clearing records")
+                PlottingManager.clear_record()
+
+            PlottingManager.finalise()
+
 
         
 

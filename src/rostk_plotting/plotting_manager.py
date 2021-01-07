@@ -8,7 +8,6 @@ from datetime import datetime
 from functools import wraps
 from shutil import rmtree
 
-
 from geometry_msgs.msg import Twist
 from rostk_plotting.dynamic_import import DynamicImport
 from rostk_plotting.plotting_callbacks import PlottingCallbacks
@@ -59,6 +58,8 @@ class PlottingManager():
     #list of all the managers so we can call parse command on all of them
     __manager_list = []
 
+    _current_record_folder = None
+
     def __init__(self, topic_list, queue_size, slop_time, plotting_callbacks = None):
         PlottingManager.__manager_list.append(self)
         self.topic_list = topic_list
@@ -89,15 +90,7 @@ class PlottingManager():
         else:
             self._key_timeout = None
 
-        self._current_record_folder = None
 
-        
-    @property
-    def current_record_folder(self):
-        if self._current_record_folder is None:
-            self._make_new_record()
-
-        return self._current_record_folder + "/"
 
     def create_subscribers(self):
         for topic_map in self.topic_list:
@@ -115,6 +108,10 @@ class PlottingManager():
 
     def post_callback(self):
         ##called immdiately after the callback function so we can reset any flags
+        raise NotImplementedError
+
+    def on_shutdown(self):
+        #called when the user closes the program - can be used to write all collectively saved data to disk
         raise NotImplementedError
 
     def callback(self, *args):
@@ -148,18 +145,30 @@ class PlottingManager():
         else:
             rospy.logwarn("{} has not saving method attached".format(msg_class_name))
 
-    def _make_new_record(self):
-        assert(self._current_record_folder == None)
+    @staticmethod
+    def make_new_record():
+        assert(PlottingManager._current_record_folder == None)
         today = datetime.now()
-        self._current_record_folder = record_path + today.strftime("%m:%d:%Y-%H:%M:%S")
-        os.mkdir(self._current_record_folder)
+        PlottingManager._current_record_folder = record_path + today.strftime("%m:%d:%Y-%H:%M:%S")
+        os.mkdir(PlottingManager._current_record_folder)
 
-    def clear_record(self):
-        if self._current_record_folder:
-            rmtree(self._current_record_folder)
+    @staticmethod
+    def clear_record():
+        if PlottingManager._current_record_folder:
+            rmtree(PlottingManager._current_record_folder)
         
 
+    @staticmethod
+    def set_current_record_folder():
+        if PlottingManager._current_record_folder is None:
+            PlottingManager._make_new_record()
 
+        return PlottingManager._current_record_folder + "/"
+
+
+    @staticmethod
+    def get_current_record_folder():
+        return PlottingManager._current_record_folder + "/"
 
 
     @staticmethod
@@ -167,4 +176,10 @@ class PlottingManager():
         for manager in PlottingManager.__manager_list:
             manager.parse_command(command_string)
 
+    @staticmethod
+    def finalise():
+        for manager in PlottingManager.__manager_list:
+            manager.on_shutdown()
+
         
+PlottingManager.make_new_record()
