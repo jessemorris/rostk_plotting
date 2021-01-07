@@ -4,13 +4,14 @@ class PlottingCallbacks():
     # plotting_manager.add_saving_method
     def __init__(self):
 
-        self.__default_callbacks = {"CameraInfo": self.camera_info_callback,
+        self.default_callbacks = {"CameraInfo": self.camera_info_callback,
                                 "Image": self.image_callback
                                 
                             }
+        
 
     def get_default_callbacks(self):
-        return self.__default_callbacks
+        return self.default_callbacks
 
     def camera_info_callback(self, data):
         print("In camera info")
