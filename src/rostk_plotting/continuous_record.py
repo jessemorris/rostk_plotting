@@ -16,9 +16,10 @@ class ContinuousPlotting(PlottingManager, PlottingCallbacks):
 
         self.start_recording = False
         self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        self.video_writer = None # we only create a video if we actually save video. Otherwise an empty file is created
 
         self._video_written = False
+        self._image_topic = None #can only set this inside the image callback function
+        self._images = []
 
     def post_callback(self):
         # self.screen_cap_flag = False
@@ -26,13 +27,15 @@ class ContinuousPlotting(PlottingManager, PlottingCallbacks):
         pass
 
     def on_shutdown(self):
-        if self._video_written and self.video_writer:
-            self.video_writer.release()
+        if self._video_written and self._image_topic and len(self._images) > 1:
+            video_writer = cv2.VideoWriter(ContinuousPlotting.get_current_record_folder() + self._image_topic + '.avi',self.fourcc, 20.0, (640,480))
+            for image in self._images:
+                video_writer.write(image)
+            video_writer.release()
 
     def parse_command(self, command_string):
         if command_string == "start":
             rospy.loginfo("Starting video record")
-            self.video_writer = cv2.VideoWriter(ContinuousPlotting.get_current_record_folder() + 'output.avi',self.fourcc, 20.0, (640,480))
             self.start_recording = True
             self._video_written = True
 
@@ -46,8 +49,13 @@ class ContinuousPlotting(PlottingManager, PlottingCallbacks):
 
     @attribute_event("start_recording")
     def image_callback(self, data):
-        input_image = image_msg_to_np(data)
-        self.video_writer.write(input_image)
+        if not self._image_topic:
+            #set topic as video outputname
+            topic_list = self.get_topic_on_callback()
+            assert(len(topic_list) == 1)
+            self._image_topic = topic_list[0].replace("/", "_")
+            print(self._image_topic)
+        self._images.append(image_msg_to_np(data))
 
     def _check_unique_msgs(self, topic_list):
         msg_types = []
