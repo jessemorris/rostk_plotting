@@ -7,7 +7,8 @@ import signal
 from datetime import datetime
 from functools import wraps
 from shutil import rmtree
-
+import inspect
+import functools
 from geometry_msgs.msg import Twist
 from rostk_plotting.dynamic_import import DynamicImport
 from rostk_plotting.plotting_callbacks import PlottingCallbacks
@@ -25,6 +26,7 @@ record_path = package_path + "/records/"
 #should be the name of some variable that, when true, triggers the callback function
 def attribute_event(attribute_flag):
     def _check_signal_flag(f):
+        @functools.wraps(f)
         def wrapper(self, *args):
             try:
                 flag = getattr(self, attribute_flag)
@@ -32,8 +34,7 @@ def attribute_event(attribute_flag):
                 if flag:
                     return f(self, *args)
             except AttributeError as e:
-                print(e)
-                rospy.logwarn("No trigger attribute {} to watch".format(attribute_flag))
+                rospy.logwarn(e)
         return wrapper
     return _check_signal_flag
 
@@ -56,7 +57,19 @@ def _classname_from_module(class_instance):
     class_name = module_list[-1][:-2]
     return class_name
 
-    
+def _get_info_from_topic_map(topic_map):
+    #topic map is conofig info {topic:msgtype}
+    #helper function to extract info from topic map (which is used as the 
+    # iterator for the self.topic_list attribute)
+    #returns topic, module_name and msg_class_name
+    assert(len(topic_map.keys()) == 1)
+    topic_name = topic_map.keys()[0]
+    type_path = topic_map.values()[0]
+
+    module_name, data_class = _parse_datatype_path(type_path)
+    return topic_name, module_name, data_class
+
+
 class PlottingManager():
     #list of all the managers so we can call parse command on all of them
     __manager_list = []
@@ -93,15 +106,29 @@ class PlottingManager():
         else:
             self._key_timeout = None
 
+    def get_topic_on_callback(self):
+        # should be used in a custom callback in order get the topic(s) that will invoke that function
+        callback_name = inspect.stack()[1][3] #some python magic to get the name of the invoking function
+        calling_topics = []
+        for msg_types, saving_methods in self.saving_methods.items():
+            function_name = saving_methods.__name__ #get the name of the fuction being called
+
+            if callback_name == function_name:
+                print("Callback name {}".format(function_name))
+                #this function was called from this msg type
+                #now get topics that have this key as their value
+                for topic_map in self.topic_list:
+                    topic, _, data_class = _get_info_from_topic_map(topic_map)
+                    if msg_types == data_class:
+                        calling_topics.append(topic)
+                return calling_topics
+        return None
 
 
     def create_subscribers(self):
         for topic_map in self.topic_list:
-            assert(len(topic_map.keys()) == 1)
-            topic_name = topic_map.keys()[0]
-            type_path = topic_map.values()[0]
-
-            module_name, data_class = _parse_datatype_path(type_path)
+            
+            topic_name, module_name, data_class = _get_info_from_topic_map(topic_map)
             subscriber_msg_type = self.dynamic_import(module_name, data_class)
             subscriber_msg_name = subscriber_msg_type.__name__
             sub = message_filters.Subscriber(topic_name, subscriber_msg_type)
@@ -147,6 +174,7 @@ class PlottingManager():
             saving_callback(msg)
         else:
             rospy.logwarn("{} has not saving method attached".format(msg_class_name))
+
 
     @staticmethod
     def make_new_record():

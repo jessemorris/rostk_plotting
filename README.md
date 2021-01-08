@@ -79,4 +79,7 @@ You can define some custom function that will save some specific data
 This class is implemented in __plotting_main.py__. It currently only has functions to listen to ```sensor_msgs.msg.Image/CameraInfo```. 
 Type __sc__ (ie. screenshot) and all listening topics will be saved in the __results__ folder. There is currently no method to create subdirectories and order the stored data more coherently. 
 
-Video class will also be added in order to record from time `t` to `t+n` based on keyboard input.
+## TODO
+- add custom sub directories for each manager class
+- make sure file names do not overlap (unless in different folders)
+- maybe add command line tool if this does not take too much time (to delete all results packages eg)
