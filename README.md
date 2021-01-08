@@ -27,7 +27,7 @@ These should be stored under a header dictiotionary (see the default config file
 
 ### PlottingManager ###
 
-This mamagers all the ros callbacks and custom saving methods for each topic. Each msg type will have its own callback (see plotting_callbacks.py for basic callbacks). The rospy.subscriber triggers a callback in the plotting manager which checks the datatype of each incoming message. The linked saving methods are then called using each data msg. Implementing and linking one of these methods allows the data to be saved however the user wants - ie writing to an image or saving to a txt file depending.
+This managers all the ros callbacks and custom saving methods for each topic. Each msg type will have its own callback (see plotting_callbacks.py for basic callbacks). The rospy.subscriber triggers a callback in the plotting manager which checks the datatype of each incoming message. The linked saving methods are then called using each data msg as input. Implementing and linking one of these methods allows the data to be saved however the user wants - ie writing to an image or saving to a txt file depending.
 
 By inheriting from PlottingManager and PlottingCallbacks you can overwrite these basic methods or one method yourself. See __ScreenShotPlotting__ as a default class that is implemented to take screenshots of topics. Specific functions must be implemented to form the interface:
 
@@ -43,7 +43,7 @@ This method is called when the user enter input. Any custom flags can be set dep
 #### Event Triggering
 Any custom saving method can be told to trigger exclusively on flag being set to true. 
 
-```python3
+```python
 class RosRecording(PlottingManager):
     ...
 
@@ -55,8 +55,28 @@ class RosRecording(PlottingManager):
 
 ```
 
-Adding the ```attribute_event``` decorator tells the function to only trigger when the variable with the str name "trigger_flag" is set to True. This should happen in the parse_command function but can happen anywhere. To avoid the callback being called the flag should then be set to false in the ```post_callback()``` function. If you want to the function to trigger on every ros callback, leave off the decorator. 
+Adding the ```attribute_event``` decorator tells the function to only trigger when the variable with the str name "trigger_flag" is set to True. This should happen in the parse_command function but can happen anywhere. 
+```python
+def parse_command(self, command):
+    # some custom command parsing from stdin
+    ...
+    self.trigger_flag = True
 
-NOTE: only screenshot class is implemented with functions specified to register on ```sensor_msgs.msg.Image/CameraInfo```. More will be added soon but I currently only need these.
+```
 
-Video class will also be added in order to record from time `t` to `t+1` based on keyboard input.
+
+To avoid the callback being called continuously, the flag should then be set to false in the ```post_callback()``` function. If you want to the function to trigger on every ros callback, leave off the decorator. 
+
+#### Custom Saving commands
+You can define some custom function that will save some specific data
+
+1. Add topic and msg type to config
+2. Write custom class that inherits from __PlottingManager__ (and __PlottingCallbacks__ if you want the default callbacks already defined)
+3. Write custom function that takes your data and add it to the plotting manager using `add_saving_method(<msg class name>, <callback>)`
+
+
+## Screen Shot 
+This class is implemented in __plotting_main.py__. It currently only has functions to listen to ```sensor_msgs.msg.Image/CameraInfo```. 
+Type __sc__ (ie. screenshot) and all listening topics will be saved in the __results__ folder. There is currently no method to create subdirectories and order the stored data more coherently. 
+
+Video class will also be added in order to record from time `t` to `t+n` based on keyboard input.

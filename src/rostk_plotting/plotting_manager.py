@@ -20,7 +20,7 @@ package_path = rospack.get_path("rostk_plotting")
 
 record_path = package_path + "/records/"
 
-# _attribute_lock = RLock()
+
 
 #should be the name of some variable that, when true, triggers the callback function
 def attribute_event(attribute_flag):
