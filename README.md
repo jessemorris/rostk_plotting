@@ -4,7 +4,14 @@
 
 A small rospy interface that allows ros topic data to be stored/recorded from keyboard input for later analysis or use in figures.
 
-The module is aimed to be as custom and dynamic as possible. Only  modification of the config.yaml file for the most common applications (such as screenshotting images). The interface allows easy custimsation of custom saving functions for any type of ROS msg data.
+The module is aimed to be as custom and dynamic as possible. Only  modification of the config.yaml file for the most common applications (such as screenshotting images). The interface allows easy customisation of saving functions for any type of ROS msg data.
+
+Modifying the topics in the config file will subscribe the node to the specified topics (either for the purpose of screencapping from each topic, or recording the video frames and exporting as a video)
+
+### Basic Commands:
+ - Type "sc" to screen shot any topics under _snapshot_topics_
+ - Type "start to begin recording frames from _video_topics_. Type "stop" to stop recording. Upon ctrl-C, this video will be
+ written to file using the topic name of the video as the filename. 
 
 ### Requirements
 - rospy
