@@ -69,6 +69,13 @@ def _get_info_from_topic_map(topic_map):
     module_name, data_class = _parse_datatype_path(type_path)
     return topic_name, module_name, data_class
 
+def get_topic_from_msg(msg):
+    header = msg._connection_header
+    if 'topic' in header:
+        return header['topic']
+    else:
+        return ''
+
 
 class PlottingManager():
     #list of all the managers so we can call parse command on all of them
@@ -78,7 +85,7 @@ class PlottingManager():
 
     def __init__(self, topic_list, queue_size, slop_time, plotting_callbacks = None):
         PlottingManager.__manager_list.append(self)
-        self.topic_list = topic_list
+        self._topic_list = topic_list
         self.dynamic_import = DynamicImport()
         self.subscriber_list = []
         #dictionary of msg type names (eg. "CameraInfo") -> to a function that will be called and act as
@@ -94,7 +101,7 @@ class PlottingManager():
             #use the default one
             self.plotting_callbacks = PlottingCallbacks()
         self.create_subscribers()
-        self.time_synchronizer = message_filters.ApproximateTimeSynchronizer(self.subscriber_list, self.queue_size, self.slop_time)
+        self.time_synchronizer = message_filters.ApproximateTimeSynchronizer(self.subscriber_list, self.queue_size, self.slop_time, allow_headerless=True)
         self.time_synchronizer.registerCallback(self.callback)
 
         self.saving_methods.update(self.plotting_callbacks.get_default_callbacks())
@@ -106,27 +113,27 @@ class PlottingManager():
         else:
             self._key_timeout = None
 
-    def get_topic_on_callback(self):
-        # should be used in a custom callback in order get the topic(s) that will invoke that function
-        callback_name = inspect.stack()[1][3] #some python magic to get the name of the invoking function
-        calling_topics = []
-        for msg_types, saving_methods in self.saving_methods.items():
-            function_name = saving_methods.__name__ #get the name of the fuction being called
+    # def get_topic_on_callback(self):
+    #     # should be used in a custom callback in order get the topic(s) that will invoke that function
+    #     callback_name = inspect.stack()[1][3] #some python magic to get the name of the invoking function
+    #     calling_topics = []
+    #     for msg_types, saving_methods in self.saving_methods.items():
+    #         function_name = saving_methods.__name__ #get the name of the fuction being called
 
-            if callback_name == function_name:
-                print("Callback name {}".format(function_name))
-                #this function was called from this msg type
-                #now get topics that have this key as their value
-                for topic_map in self.topic_list:
-                    topic, _, data_class = _get_info_from_topic_map(topic_map)
-                    if msg_types == data_class:
-                        calling_topics.append(topic)
-                return calling_topics
-        return None
+    #         if callback_name == function_name:
+    #             print("Callback name {}".format(function_name))
+    #             #this function was called from this msg type
+    #             #now get topics that have this key as their value
+    #             for topic_map in self.topic_list:
+    #                 topic, _, data_class = _get_info_from_topic_map(topic_map)
+    #                 if msg_types == data_class:
+    #                     calling_topics.append(topic)
+    #             return calling_topics
+    #     return None
 
 
     def create_subscribers(self):
-        for topic_map in self.topic_list:
+        for topic_map in self._topic_list:
             
             topic_name, module_name, data_class = _get_info_from_topic_map(topic_map)
             subscriber_msg_type = self.dynamic_import(module_name, data_class)
@@ -135,6 +142,16 @@ class PlottingManager():
             rospy.loginfo("Subscribing to topic: {} [{}]".format(topic_name, subscriber_msg_name))
             self.subscriber_list.append(sub)
             self.saving_methods[subscriber_msg_name] = None
+
+    def get_number_subscribers(self):
+        return len(self.subscriber_list)
+
+    def get_subscribed_topics(self):
+        topics = []
+        for topic_map in self._topic_list:
+            topic_name, module_name, data_class = _get_info_from_topic_map(topic_map) 
+            topics.append(topic_name)
+        return topics
 
     def post_callback(self):
         ##called immdiately after the callback function so we can reset any flags

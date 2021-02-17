@@ -32,7 +32,6 @@ class ScreenShotPlotting(PlottingManager, PlottingCallbacks):
         
     @attribute_event("screen_cap_flag")
     def image_callback(self, data):
-        print(self.get_topic_on_callback())
         input_image = image_msg_to_np(data)
         cv2.imwrite(ScreenShotPlotting.get_current_record_folder() + str(self.image_id) + ".png", input_image)
         self.image_id+=1

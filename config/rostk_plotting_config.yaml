@@ -1,8 +1,13 @@
 snapshot_topics:
-  - {"/gmsl/A1/camera_info": "sensor_msgs.msg.CameraInfo"}
-  - {"/gmsl/A1/image_color": "sensor_msgs.msg.Image"}
-  - {"/gmsl/A2/image_color": "sensor_msgs.msg.Image"}
+  - {"/camera/depth/image_raw": "sensor_msgs.msg.Image"}
+  - {"/camera/flow/colour_map": "sensor_msgs.msg.Image"}
+  - {"/camera/mask/colour_mask": "sensor_msgs.msg.Image"}
+  - {"/camera/rgb/image_raw": "sensor_msgs.msg.Image"}
 
-video_topics:
-  - {"/gmsl/A1/camera_info": "sensor_msgs.msg.CameraInfo"}
-  - {"/gmsl/A2/image_color": "sensor_msgs.msg.Image"}
+# video_topics:
+#   - {"/gmsl/A1/camera_info": "sensor_msgs.msg.CameraInfo"}
+#   - {"/gmsl/A2/image_color": "sensor_msgs.msg.Image"}
+
+# graphing_topics:
+#   - {"/point_tests": geometry_msgs.msg.Point}
+#   - {"/point_tests1": geometry_msgs.msg.Point}

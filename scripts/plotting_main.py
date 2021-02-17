@@ -15,6 +15,7 @@ from rostk_plotting.plotting_callbacks import PlottingCallbacks
 from rostk_plotting.plotting_manager import PlottingManager, attribute_event
 from rostk_plotting.screen_shot import ScreenShotPlotting
 from rostk_plotting.continuous_record import ContinuousPlotting
+from rostk_plotting.graphing import Graphing
 import sys, select, termios, tty, os
 import rospkg
 
@@ -34,13 +35,16 @@ if __name__=="__main__":
     signal.signal(signal.SIGINT, signal_handler)
 
     snapshot_topic_list = rospy.get_param('/ros_toolkit/plotting/snapshot_topics')
-    video_topic_list = rospy.get_param('/ros_toolkit/plotting/video_topics')
+    # video_topic_list = rospy.get_param('/ros_toolkit/plotting/video_topics')
+    # graphing_topic_list = rospy.get_param('/ros_toolkit/plotting/graphing_topics')
     queue_size = rospy.get_param('/ros_toolkit/plotting/queue_size')
     slop_time = rospy.get_param('/ros_toolkit/plotting/slop_time')
 
     screen_shot_plotting = ScreenShotPlotting(snapshot_topic_list, int(queue_size), int(slop_time))
-    video_plotting = ContinuousPlotting(video_topic_list, int(queue_size), int(slop_time))
+    # video_plotting = ContinuousPlotting(video_topic_list, int(queue_size), int(slop_time))
 
+
+    # graphing = Graphing(graphing_topic_list, int(queue_size), int(slop_time))
     
     
     while not rospy.is_shutdown():   
