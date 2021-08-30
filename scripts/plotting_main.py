@@ -34,14 +34,17 @@ if __name__=="__main__":
     rospy.init_node("rostk_plotting", disable_signals=True)
     signal.signal(signal.SIGINT, signal_handler)
 
-    snapshot_topic_list = rospy.get_param('/ros_toolkit/plotting/snapshot_topics')
-    # video_topic_list = rospy.get_param('/ros_toolkit/plotting/video_topics')
     # graphing_topic_list = rospy.get_param('/ros_toolkit/plotting/graphing_topics')
     queue_size = rospy.get_param('/ros_toolkit/plotting/queue_size')
     slop_time = rospy.get_param('/ros_toolkit/plotting/slop_time')
 
-    screen_shot_plotting = ScreenShotPlotting(snapshot_topic_list, int(queue_size), int(slop_time))
-    # video_plotting = ContinuousPlotting(video_topic_list, int(queue_size), int(slop_time))
+    if rospy.has_param('/ros_toolkit/plotting/snapshot_topics'):
+        snapshot_topic_list = rospy.get_param('/ros_toolkit/plotting/snapshot_topics')
+        screen_shot_plotting = ScreenShotPlotting(snapshot_topic_list, int(queue_size), int(slop_time))
+
+    if rospy.has_param('/ros_toolkit/plotting/video_topics'):
+        video_topic_list = rospy.get_param('/ros_toolkit/plotting/video_topics')
+        video_plotting = ContinuousPlotting(video_topic_list, int(queue_size), int(slop_time))
 
 
     # graphing = Graphing(graphing_topic_list, int(queue_size), int(slop_time))

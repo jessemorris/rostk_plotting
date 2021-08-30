@@ -5,7 +5,8 @@ class PlottingCallbacks():
     def __init__(self):
 
         self.default_callbacks = {"CameraInfo": self.camera_info_callback,
-                                "Image": self.image_callback
+                                "Image": self.image_callback,
+                                "PointCloud2": self.point_cloud_callback
                                 
                             }
         
@@ -18,4 +19,7 @@ class PlottingCallbacks():
 
 
     def image_callback(self, data):
+        pass
+
+    def point_cloud_callback(self, data):
         pass

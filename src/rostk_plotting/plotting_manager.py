@@ -15,6 +15,7 @@ from rostk_plotting.plotting_callbacks import PlottingCallbacks
 import sys, select, termios, tty, os
 import rospkg
 
+
 rospack = rospkg.RosPack()
 package_path = rospack.get_path("rostk_plotting")
 
@@ -69,12 +70,25 @@ def _get_info_from_topic_map(topic_map):
     module_name, data_class = _parse_datatype_path(type_path)
     return topic_name, module_name, data_class
 
+
 def get_topic_from_msg(msg):
     header = msg._connection_header
     if 'topic' in header:
         return header['topic']
     else:
         return ''
+
+def convert_topic_to_file_name(topic):
+    """[Converts a namespaced topic to a string that can be used as a file name.
+    Eg. camera/rgb/image_raw -> camera_rgb_image_raw]
+
+    Args:
+        topic ([str]): [input topic name]
+
+    Returns:
+        [str]: [topic name as an okay file format]
+    """
+    return topic.replace("/", "_")
 
 
 class PlottingManager():
@@ -101,6 +115,9 @@ class PlottingManager():
             #use the default one
             self.plotting_callbacks = PlottingCallbacks()
         self.create_subscribers()
+
+        #TODO: dont make time synchronous -> just make new subscribers and make callback
+        #get the topic name and then callback the custom callback with the data and the topic name
         self.time_synchronizer = message_filters.ApproximateTimeSynchronizer(self.subscriber_list, self.queue_size, self.slop_time, allow_headerless=True)
         self.time_synchronizer.registerCallback(self.callback)
 
@@ -112,25 +129,6 @@ class PlottingManager():
             self._key_timeout = 1.0 / self.queue_size
         else:
             self._key_timeout = None
-
-    # def get_topic_on_callback(self):
-    #     # should be used in a custom callback in order get the topic(s) that will invoke that function
-    #     callback_name = inspect.stack()[1][3] #some python magic to get the name of the invoking function
-    #     calling_topics = []
-    #     for msg_types, saving_methods in self.saving_methods.items():
-    #         function_name = saving_methods.__name__ #get the name of the fuction being called
-
-    #         if callback_name == function_name:
-    #             print("Callback name {}".format(function_name))
-    #             #this function was called from this msg type
-    #             #now get topics that have this key as their value
-    #             for topic_map in self.topic_list:
-    #                 topic, _, data_class = _get_info_from_topic_map(topic_map)
-    #                 if msg_types == data_class:
-    #                     calling_topics.append(topic)
-    #             return calling_topics
-    #     return None
-
 
     def create_subscribers(self):
         for topic_map in self._topic_list:
